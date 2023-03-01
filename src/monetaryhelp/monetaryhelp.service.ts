@@ -8,18 +8,37 @@ export class MonetaryhelpService {
 
     async getMonetaryHelp(code: string) {
 
-        //Check if the data is on cache
-        const cachedData = await this.cacheService.get(code);
-        if(cachedData) {
-            console.log('Got data from cache');
-            return cachedData;
-        }
+        let results: any;
+        let isCached = false;
 
-        // if not, call the main API and set the response to cache
-        const { data } = await this.httpService.axiosRef.get(`https://api.iatistandard.org/datastore/activity/select?q=${code.toUpperCase()}`);
-        await this.cacheService.set(code, data);
-        console.log('data set to cache');
-        return await data;
+        try {
+
+            // Check if the data is on cache
+            const cachedData = await this.cacheService.get(code);
+            if(cachedData) {
+                isCached = true;
+                results = cachedData;
+            } else {
+
+                // if not, call the main API and set the response to cache
+                const response = await this.httpService.axiosRef.get(`https://api.iatistandard.org/datastore/activity/select?q=${code.toUpperCase()}`);
+                
+
+                //This can change in base of response
+                results = response.data;
+            }
+
+            return {
+                fromCache: isCached,
+                data: results
+            }
+        } catch (error) {
+            console.log(error);
+            return {
+                error
+            }   
+        }
+        
 
     }
 }
